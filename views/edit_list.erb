@@ -1,0 +1,28 @@
+<section id="todos">
+  <header>
+    <h2>Editing '<%= @current_list[:name] %>'</h2>
+    <ul>
+      <li>
+        <form action="/lists/<%= @list_idx %>/delete" method="post" class="delete">
+          <button type="submit" class="delete">Delete List</button>
+        </form>
+      </li>
+    </ul>
+  </header>
+</section>
+
+<form action="/lists/<%= @list_idx %>/edit" method="post">
+  <dl>
+    <dt>
+      <label for="new_list_name">Enter the new name for the list:</label>
+    </dt>
+    <dd>
+      <input name="new_list_name" placeholder="New List Name" type="text"
+             value="<%= session.delete(:entered_name) || @current_list[:name] %>">
+    </dd>
+  </dl>
+  <fieldset class="actions">
+    <input type="submit" value="Save">
+    <a href="/lists/<%= @list_idx %>">Cancel</a>
+  </fieldset>
+</form>
