@@ -26,14 +26,13 @@ helpers do
     list[:todos].count
   end
 
-  def sorted_lists(lists)
+  def sort_lists(lists)
     lists.sort_by { |list| all_completed?(list) ? 1 : 0 }
   end
 
-  def sorted_todos(list)
+  def sort_todos(list)
     list.sort_by { |todo| todo[:completed] ? 1 : 0 }
   end
-
 end
 
 class SessionPersistence
@@ -50,7 +49,7 @@ class SessionPersistence
     @session[:lists]
   end
 
-  def add_list(list_name)
+  def create_list(list_name)
     id = next_id(@session[:lists])
     @session[:lists] << { id: id, name: list_name, todos: [] }
   end
@@ -69,20 +68,19 @@ class SessionPersistence
     list[:todos].delete_if { |todo| todo[:id] == todo_id }
   end
 
-  def add_todo(list_id, todo)
+  def create_todo(list_id, todo)
     list = find_list(list_id)
     todo_id = next_id(list[:todos])
     list[:todos] << { id: todo_id, name: todo, completed: false }
   end
 
-  def update_todo_status(list_id, todo_id, is_completed)
+  def update_todo_status(list_id, todo_id, updated_status)
     list = find_list(list_id)
-    list[:todos].each do |todo|
-      todo[:completed] = is_completed if todo[:id] == todo_id
-    end
+    todo = list[:todos].find { |t| t[:id] == todo_id }
+    todo[:completed] = updated_status
   end
 
-  def complete_all_todos(list_id)
+  def mark_all_todos_completed(list_id)
     list = find_list(list_id)
 
     list[:todos].each do |todo|
@@ -129,15 +127,18 @@ get "/" do
   redirect "/lists"
 end
 
+# view list of todo lists
 get "/lists" do
   @lists = @storage.all_lists
   erb :lists, layout: :layout
 end
 
+# edit new list
 get "/lists/new" do
   erb :new_list, layout: :layout
 end
 
+# create new list
 post "/lists" do
   list_name = params[:list_name].strip
 
@@ -147,12 +148,13 @@ post "/lists" do
     session[:error] = error
     erb :new_list, layout: :layout
   else
-    @storage.add_list(list_name)
+    @storage.create_list(list_name)
     session[:success] = "The list has been created."
     redirect "/lists"
   end
 end
 
+# view a todo list
 get "/lists/:list_id" do |list_id|
   @list_id = list_id.to_i
   @current_list = load_list(@list_id)
@@ -160,9 +162,10 @@ get "/lists/:list_id" do |list_id|
   erb :list, layout: :layout
 end
 
+# create a new todo item
 post "/lists/:list_id/todos" do |list_id|
   @list_id = list_id.to_i
-  # @current_list = load_list(@list_id)
+  @current_list = load_list(@list_id)
 
   todo = params[:todo].strip
 
@@ -172,12 +175,13 @@ post "/lists/:list_id/todos" do |list_id|
     session[:error] = error
     erb :list, layout: :layout
   else
-    @storage.add_todo(list_id, todo)
+    @storage.create_todo(@list_id, todo)
     session[:success] = "The todo has been added."
     redirect "/lists/#{list_id}"
   end
 end
 
+# edit list info
 get "/lists/:list_id/edit" do |list_id|
   @list_id = list_id.to_i
   @current_list = load_list(@list_id)
@@ -185,9 +189,10 @@ get "/lists/:list_id/edit" do |list_id|
   erb :edit_list
 end
 
+# update list name
 post "/lists/:list_id/edit" do |list_id|
-  list_id = list_id.to_i
-  current_list = load_list(list_id)
+  @list_id = list_id.to_i
+  @current_list = load_list(@list_id)
 
   new_list_name = params[:new_list_name].strip
 
@@ -196,15 +201,15 @@ post "/lists/:list_id/edit" do |list_id|
   if error
     session[:error] = error
     session[:entered_name] = params[:new_list_name]
-    #redirect "/lists/#{list_id}/edit"
     erb :edit_list
   else
-    @storage.update_list_name(list_id, new_list_name)
+    @storage.update_list_name(@list_id, new_list_name)
     session[:success] = "The list has been updated."
     redirect "/lists/#{list_id}"
   end
 end
 
+# delete a list
 post "/lists/:list_id/delete" do |list_id|
   list_id = list_id.to_i
 
@@ -218,6 +223,7 @@ post "/lists/:list_id/delete" do |list_id|
   end
 end
 
+# delete a todo item
 post "/lists/:list_id/todos/:todo_id/delete" do |list_id, todo_id|
   list_id = list_id.to_i
   todo_id = todo_id.to_i
@@ -232,6 +238,7 @@ post "/lists/:list_id/todos/:todo_id/delete" do |list_id, todo_id|
   end
 end
 
+# update todo status
 post "/lists/:list_id/todos/:todo_id" do |list_id, todo_id|
   list_id = list_id.to_i
   todo_id = todo_id.to_i
@@ -244,10 +251,11 @@ post "/lists/:list_id/todos/:todo_id" do |list_id, todo_id|
   redirect "/lists/#{list_id}"
 end
 
-post "/lists/:list_id/complete_all_todos" do |list_id|
+# mark all todo items in a list completed
+post "/lists/:list_id/mark_all_todos_completed" do |list_id|
   list_id = list_id.to_i
 
-  @storage.complete_all_todos(list_id)
+  @storage.mark_all_todos_completed(list_id)
 
   session[:success] = "All todos have been marked completed."
 

@@ -3,7 +3,7 @@
     <h2><%= @current_list[:name] %></h2>
     <ul>
       <li>
-        <form action="/lists/<%= @list_id %>/complete_all_todos" method="post">
+        <form action="/lists/<%= @list_id %>/mark_all_todos_completed" method="post">
           <button class="check" type="submit">Complete All</button>
         </form>
       </li>
@@ -14,7 +14,7 @@
   </header>
 
   <ul>
-    <% sorted_todos(@current_list[:todos]).each do |todo| %>
+    <% sort_todos(@current_list[:todos]).each do |todo| %>
       <% if todo[:completed] %>
         <li class="complete">
       <% else %>

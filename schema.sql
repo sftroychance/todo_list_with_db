@@ -1,0 +1,11 @@
+CREATE TABLE list(
+  id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name varchar(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE todo(
+  id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name varchar(100) NOT NULL,
+  list_id int NOT NULL REFERENCES list(id) ON DELETE CASCADE,
+  completed boolean NOT NULL DEFAULT false
+);
