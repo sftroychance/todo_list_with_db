@@ -17,19 +17,11 @@ end
 
 helpers do
   def all_completed?(list)
-    todos_count(list) > 0 && todos_remaining(list) == 0
+    list[:todos_count] > 0 && list[:todos_remaining_count] == 0
   end
 
   def list_class(list)
     "complete" if all_completed?(list)
-  end
-
-  def todos_remaining(list)
-    list[:todos].count { |todo| !todo[:completed] }
-  end
-
-  def todos_count(list)
-    list[:todos].count
   end
 
   def sort_lists(lists)
@@ -88,7 +80,7 @@ get "/lists/new" do
 end
 
 # create new list
-post "/lists" do
+post "/lists/new``" do
   list_name = params[:list_name].strip
 
   error = list_name_error(list_name)
@@ -107,6 +99,7 @@ end
 get "/lists/:list_id" do |list_id|
   @list_id = list_id.to_i
   @current_list = load_list(@list_id)
+  @todos = @storage.all_todos_for_a_list(@list_id)
 
   erb :list, layout: :layout
 end
